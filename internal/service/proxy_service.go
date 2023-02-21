@@ -2,11 +2,12 @@ package service
 
 import (
 	"fmt"
-	"github.com/kanatovnurzhas/proxy_golang/internal/cache"
-	"github.com/kanatovnurzhas/proxy_golang/internal/models"
 	"log"
 	"net/http"
 	"net/url"
+
+	"github.com/kanatovnurzhas/proxy_golang/internal/cache"
+	"github.com/kanatovnurzhas/proxy_golang/internal/models"
 )
 
 type IProxyService interface {
@@ -31,25 +32,32 @@ func (p *proxyService) ProxyRequest(request models.RequestProxy) (models.Respons
 	if err != nil {
 		return models.ResponseProxy{}, fmt.Errorf("proxy service,error parse url: %s", err)
 	}
-	cacheKey, err := convertKeyForCaching(request)
+	cacheKey, err := convertKeyForCaching(request) // converting request for save in cache
 	if err != nil {
 		return models.ResponseProxy{}, fmt.Errorf("proxy service,error convert key for caching: %s", err)
 	}
-	response, ok := p.Get(cacheKey)
+	response, ok := p.Get(cacheKey) // check request in the cache, if request in cache return response
 	if ok {
 		log.Println("response from cache")
 		return response, nil
 	}
-
-	newReq, err := http.NewRequest(request.Method, request.Url, nil)
+	newReq, err := http.NewRequest(request.Method, request.Url, nil) // if request is new, create new request
 	if err != nil {
 		return models.ResponseProxy{}, fmt.Errorf("proxy service,error new request: %s", err)
 	}
-	return models.ResponseProxy{}, nil
+	for v, k := range request.Headers {
+		newReq.Header.Set(k, v)
+	}
+	res, err := http.DefaultClient.Do(newReq) // sends request and get response
+	if err != nil {
+		return models.ResponseProxy{}, fmt.Errorf("proxy service, error Do new request: %s", err)
+	}
+	p.Set(cacheKey, makeResponseProxy(res)) // save in cache request and response
+	return makeResponseProxy(res), nil
 }
 
 func (p *proxyService) Set(key models.KeyRequest, resp models.ResponseProxy) {
-	//если какая то бизнес логика будет можно будет здесь добавить, а так она по умолчанию просто записывает
+	// если какая то бизнес логика будет можно будет здесь добавить, а так она по умолчанию просто записывает
 	p.Set(key, resp)
 }
 
