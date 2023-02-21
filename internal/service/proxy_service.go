@@ -48,7 +48,8 @@ func (p *proxyService) ProxyRequest(request models.RequestProxy) (models.Respons
 	for v, k := range request.Headers {
 		newReq.Header.Set(k, v)
 	}
-	res, err := http.DefaultClient.Do(newReq) // sends request and get response
+	client := http.Client{}
+	res, err := client.Do(newReq) // sends request and get response
 	if err != nil {
 		return models.ResponseProxy{}, fmt.Errorf("proxy service, error Do new request: %s", err)
 	}
@@ -58,9 +59,9 @@ func (p *proxyService) ProxyRequest(request models.RequestProxy) (models.Respons
 
 func (p *proxyService) Set(key models.KeyRequest, resp models.ResponseProxy) {
 	// если какая то бизнес логика будет можно будет здесь добавить, а так она по умолчанию просто записывает
-	p.Set(key, resp)
+	p.cacheRequest.SetRequest(key, resp)
 }
 
 func (p *proxyService) Get(key models.KeyRequest) (models.ResponseProxy, bool) {
-	return p.Get(key)
+	return p.cacheRequest.GetRequest(key)
 }

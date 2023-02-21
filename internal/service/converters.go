@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -18,8 +17,6 @@ func convertKeyForCaching(req models.RequestProxy) (models.KeyRequest, error) {
 		return models.KeyRequest{}, err
 	}
 	keyRequest.Headers = string(headersBytes)
-	fmt.Println(keyRequest.Headers)
-	fmt.Println("Convert key:", keyRequest)
 	return keyRequest, nil
 }
 
